@@ -1,0 +1,7 @@
+pandas
+requests
+kaggle
+
+# os.environ['KAGGLE_USERNAME'] = "abishekshyamsunder"
+# os.environ['KAGGLE_KEY'] = "42f150d89d12555e03ac023fa7d04622"
+# os.system("# kaggle datasets download -d arkhoshghalb/twitter-sentiment-analysis-hatred-speech")
