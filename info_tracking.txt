@@ -1,6 +1,7 @@
 pandas
 requests
 kaggle
+wget
 
 # os.environ['KAGGLE_USERNAME'] = "abishekshyamsunder"
 # os.environ['KAGGLE_KEY'] = "42f150d89d12555e03ac023fa7d04622"
