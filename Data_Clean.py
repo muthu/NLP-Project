@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[19]:
+# In[1]:
 
 
 import pandas as pd
 import os
+import re
 
 
 # In[2]:
@@ -16,7 +17,7 @@ gt_df = pd.read_csv("data/github_twitter/train.csv")
 gr_df = pd.read_csv("data/github_reddit/train.csv")
 
 
-# # Cleaning Reddit Data and storing in DataFrame 
+# # Cleaning Reddit Data and storing in CSV 
 
 # In[20]:
 
@@ -47,6 +48,34 @@ train_data = pd.DataFrame(dictionary)
 if not os.path.exists("data/clean"):
     os.system("mkdir data/clean")
 train_data.to_csv("data/clean/reddit.csv")
+
+
+# # Cleaning Twitter Kaggle Data and Storing in CSV
+
+# In[15]:
+
+
+clean_tweets = []
+clean_labels = []
+for index, row in kt_df.iterrows():
+    s = re.sub(r'[^a-zA-Z0-9_!@#$%^&*\(\)-= \{\}\[\]:;\"]', '', row['tweet'])
+    s = re.sub('bihday','birthday',s)
+    s = s.strip(" ")
+    s = s.strip("\t")
+    clean_tweets.append(s)
+    clean_labels.append(row["label"])
+    
+tw_kg = {"Label": clean_labels, "Data": clean_tweets}
+train_data = pd.DataFrame(tw_kg)
+if not os.path.exists("data/clean"):
+    os.system("mkdir data/clean")
+train_data.to_csv("data/clean/git_twitter.csv")
+
+
+# In[14]:
+
+
+
 
 
 # In[ ]:
