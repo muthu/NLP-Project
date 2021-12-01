@@ -3,3 +3,4 @@ requests
 kaggle
 wget
 jupyterlab
+sklearn
