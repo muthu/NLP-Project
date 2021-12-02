@@ -14,6 +14,8 @@
 # Code for creating Naive Bayes Classifier for textual data
 import numpy as np
 import pandas as pd
+import nltk
+nltk.download("stopwords")
 from nltk.tokenize import word_tokenize
 
 from sklearn.feature_extraction.text import TfidfVectorizer
