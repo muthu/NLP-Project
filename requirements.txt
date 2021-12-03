@@ -3,3 +3,7 @@ requests
 kaggle
 wget
 jupyterlab
+sklearn
+nltk
+tensorflow
+termcolor
