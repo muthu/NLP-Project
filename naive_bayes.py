@@ -4,8 +4,8 @@
 # In[1]:
 
 
-get_ipython().system('pip install sklearn')
-get_ipython().system('pip install nltk')
+# get_ipython().system('pip install sklearn')
+# get_ipython().system('pip install nltk')
 
 
 # In[50]:
@@ -14,6 +14,8 @@ get_ipython().system('pip install nltk')
 # Code for creating Naive Bayes Classifier for textual data
 import numpy as np
 import pandas as pd
+import nltk
+nltk.download("stopwords")
 from nltk.tokenize import word_tokenize
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -21,6 +23,7 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
+from termcolor import colored
 
 from nltk.corpus import stopwords
 stop_words = stopwords.words('english')
@@ -104,7 +107,7 @@ predicted_categories = model.predict(test_X)
 # In[84]:
 
 
-accuracy_score(test_y, predicted_categories)
+print(colored("The accuracy of Baseline Naive bayes is: " + str(accuracy_score(test_y, predicted_categories)), 'green'))
 
 
 # In[85]:
