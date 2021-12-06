@@ -23,7 +23,9 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import f1_score
 from termcolor import colored
+import os
 
 from nltk.corpus import stopwords
 stop_words = stopwords.words('english')
@@ -33,6 +35,11 @@ porter = PorterStemmer()
 import string
 table = str.maketrans('', '', string.punctuation)
 
+def reset_random_seeds():
+   os.environ['PYTHONHASHSEED']=str(1235)
+   np.random.seed(1235)
+
+reset_random_seeds()
 
 # In[51]:
 
@@ -41,6 +48,11 @@ twitter_df = pd.read_csv("data/clean/git_twitter.csv", index_col = "Unnamed: 0")
 reddit_df = pd.read_csv("data/clean/reddit.csv", index_col = "Unnamed: 0")
 reddit_df = reddit_df.dropna()
 
+num_to_sample = np.sum(reddit_df['Label']==1)
+df_zero = reddit_df.query("Label==0").sample(n = num_to_sample, random_state=1)
+df_one = reddit_df.query("Label==1")
+reddit_df = df_zero.append(df_one, ignore_index=True)
+reddit_df = reddit_df.sample(frac = 1)
 
 # # Cleaning Data using Stemming, removing stop words, removing punctuations etc.
 
@@ -106,7 +118,7 @@ predicted_categories = model.predict(test_X)
 
 # In[84]:
 
-
+print(colored("The F1 of Baseline Naive bayes is: " + str(f1_score(test_y, predicted_categories)), 'green'))
 print(colored("The accuracy of Baseline Naive bayes is: " + str(accuracy_score(test_y, predicted_categories)), 'green'))
 
 

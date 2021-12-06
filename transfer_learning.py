@@ -17,11 +17,15 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from keras.layers import TimeDistributed
 import tensorflow_hub as hub
+from termcolor import colored
 import numpy as np 
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import f1_score
+import os
+import random
 from tqdm import tqdm
 
 import nltk
@@ -32,13 +36,23 @@ from nltk.stem.porter import PorterStemmer
 porter = PorterStemmer()
 lem = nltk.stem.wordnet.WordNetLemmatizer()
 
-tf.random.set_seed(1234)
-
 import string
 table = str.maketrans('', '', string.punctuation)
 
 
 # In[3]:
+
+
+def reset_random_seeds():
+   os.environ['PYTHONHASHSEED']=str(1235)
+   tf.random.set_seed(1235)
+   np.random.seed(1235)
+   random.seed(1235)
+
+reset_random_seeds()
+
+
+# In[4]:
 
 
 class EarlyStoppingAtMaxVal(keras.callbacks.Callback):
@@ -84,12 +98,17 @@ class EarlyStoppingAtMaxVal(keras.callbacks.Callback):
             print("Epoch %05d: early stopping" % (self.stopped_epoch + 1))
 
 
-# In[4]:
+# In[5]:
 
 
 twitter_df = pd.read_csv("data/clean/git_twitter.csv", index_col = "Unnamed: 0")
 reddit_df = pd.read_csv("data/clean/reddit.csv", index_col = "Unnamed: 0")
 reddit_df = reddit_df.dropna()
+num_to_sample = np.sum(reddit_df['Label']==1)
+df_zero = reddit_df.query("Label==0").sample(n = num_to_sample, random_state=1)
+df_one = reddit_df.query("Label==1")
+reddit_df = df_zero.append(df_one, ignore_index=True)
+reddit_df = reddit_df.sample(frac = 1)
 reddit_df['Data'] = reddit_df['Data'].str.lower()
 reddit_df['Data'] = reddit_df['Data'].apply(lambda x: ' '.join([word.translate(table) for word in x.split()]))
 reddit_df['Data'] = reddit_df['Data'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop_words)]))
@@ -98,14 +117,14 @@ reddit_df['Data'] = reddit_df['Data'].apply(lambda x: ' '.join([porter.stem(word
 # reddit_df['Data'] = reddit_df['Data'].apply(lambda x: ' '.join([lem.lemmatize(word) for word in x.split()]))
 
 
-# In[5]:
+# In[6]:
 
 
 # encoder = hub.load('https://tfhub.dev/google/universal-sentence-encoder/4')
 # encoder(['Hello World'])
 
 
-# In[6]:
+# In[7]:
 
 
 # reddit_df['Data'] = reddit_df['Data'].str.lower()
@@ -113,7 +132,7 @@ reddit_df['Data'] = reddit_df['Data'].apply(lambda x: ' '.join([porter.stem(word
 (train, val) = train_test_split(train, test_size=0.2, random_state=42, shuffle=True)
 
 
-# In[7]:
+# In[8]:
 
 
 train_sentences = train['Data'].to_numpy()
@@ -125,37 +144,44 @@ test_labels = test['Label'].to_numpy()
 val_labels = val['Label'].to_numpy()
 
 
-# In[8]:
-
-
-vocab_size = 10000
-model = tf.keras.models.Sequential()
-model.add(hub.KerasLayer('https://tfhub.dev/google/universal-sentence-encoder/4', 
-                        input_shape=[], 
-                        dtype=tf.string, 
-                        trainable=False))
-model.add(tf.keras.layers.Dense(6))
-model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
-
-
 # In[9]:
 
 
-model.compile(optimizer='adam', 
-              loss='binary_crossentropy', 
-              metrics=['accuracy'])
+np.sum(test['Label']==1)
+np.sum(test['Label']==0)
 
 
 # In[10]:
 
 
-model.fit(train_sentences, 
-          train_labels, 
-          epochs=10, 
-          validation_data=(val_sentences, val_labels))
+vocab_size = 10000
+# model = tf.keras.models.Sequential()
+# model.add(hub.KerasLayer('https://tfhub.dev/google/universal-sentence-encoder/4', 
+#                         input_shape=[], 
+#                         dtype=tf.string, 
+#                         trainable=False))
+# model.add(tf.keras.layers.Dense(6))
+# model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
 
 # In[11]:
+
+
+# model.compile(optimizer='adam', 
+#               loss='binary_crossentropy', 
+#               metrics=['accuracy'])
+
+
+# In[12]:
+
+
+# model.fit(train_sentences, 
+#           train_labels, 
+#           epochs=10, 
+#           validation_data=(val_sentences, val_labels))
+
+
+# In[13]:
 
 
 token = Tokenizer()
@@ -178,13 +204,13 @@ test_padded = pad_sequences(seq,maxlen=300)
 
 
 
-# In[12]:
+# In[14]:
 
 
 vocab_size = len(token.word_index)+1
 
 
-# In[13]:
+# In[15]:
 
 
 # embedding_vector = {}
@@ -196,7 +222,7 @@ vocab_size = len(token.word_index)+1
 #     embedding_vector[word] = coef
 
 
-# In[14]:
+# In[16]:
 
 
 # embedding_matrix = np.zeros((vocab_size,300))
@@ -206,7 +232,7 @@ vocab_size = len(token.word_index)+1
 #         embedding_matrix[i] = embedding_value
 
 
-# In[15]:
+# In[17]:
 
 
 # with open("embedding_mat_lem.npy","rb") as f:
@@ -215,7 +241,7 @@ with open("embedding_mat.npy","rb") as f:
     embedding_matrix = np.load(f)
 
 
-# In[16]:
+# In[18]:
 
 
 simple_model = tf.keras.models.Sequential([
@@ -225,27 +251,19 @@ simple_model = tf.keras.models.Sequential([
 ])
 
 
-# In[17]:
+# In[19]:
 
 
 simple_model.compile(loss="binary_crossentropy",optimizer="adam",metrics=['accuracy'])
 simple_model.fit(padding,train_labels,epochs = 10,validation_data=(val_padded,val_labels),callbacks=[EarlyStoppingAtMaxVal()])
 
 
-# In[18]:
+# In[20]:
 
 
 output = simple_model.evaluate(test_padded,  test_labels, verbose=2)
-print(colored("The GloVe-GRU model gives us an accuracy of: " + str(output[1]), 'green'))
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
+y_preds = simple_model.predict(test_padded)
+pred_labels = np.where(y_preds > 0.5, 1, 0)
+print(colored("The Transfer (GloVe) model has a F1 score of: " + str(f1_score(test_labels, pred_labels)), 'green'))
+print(colored("The Transfer (GloVe) model gives us an accuracy of: " + str(output[1]), 'green'))
 
